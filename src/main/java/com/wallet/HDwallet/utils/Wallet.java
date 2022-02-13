@@ -3,6 +3,8 @@ package com.wallet.HDwallet.utils;
 import com.wallet.HDwallet.common.WalletConstant;
 import lombok.Data;
 import org.web3j.crypto.Bip32ECKeyPair;
+import org.web3j.crypto.Credentials;
+import org.web3j.crypto.WalletUtils;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -29,5 +31,10 @@ public class Wallet implements IWallet {
      */
     public Bip32ECKeyPair generateDerivedKeyPairs(Bip32ECKeyPair masterKey, int[] path) {
         return Bip32ECKeyPair.deriveKeyPair(masterKey, path);
+    }
+
+    @Override
+    public Credentials loadExistingWallet(String passphrase, String mnemonic) {
+        return WalletUtils.loadBip39Credentials(passphrase, mnemonic);
     }
 }

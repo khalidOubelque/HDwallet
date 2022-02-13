@@ -1,6 +1,7 @@
 package com.wallet.HDwallet.utils;
 
 import org.web3j.crypto.Bip32ECKeyPair;
+import org.web3j.crypto.Credentials;
 import org.web3j.crypto.MnemonicUtils;
 
 import java.security.NoSuchAlgorithmException;
@@ -57,7 +58,21 @@ public interface IWallet {
         return Bip32ECKeyPair.generateKeyPair(seed);
     }
 
+    /**
+     * Generate DerivedKeyPairs given master keys
+     * @param masterKey
+     * @param path
+     * @return Master keyPairs
+     */
     Bip32ECKeyPair generateDerivedKeyPairs(Bip32ECKeyPair masterKey, int[] path);
+
+    /**
+     * Load Existing wallet From a Mnemonic and passphrase
+     * @param passphrase
+     * @param mnemonic
+     * @return Credentials
+     */
+    Credentials loadExistingWallet(String passphrase, String mnemonic);
 
 
 }
