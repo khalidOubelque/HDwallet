@@ -1,8 +1,10 @@
 package com.wallet.HDwallet.controller;
 
 import com.wallet.HDwallet.common.WalletConstant;
+import com.wallet.HDwallet.utils.EthereumWallet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.web3j.abi.datatypes.Address;
 import org.web3j.abi.datatypes.generated.Uint256;
@@ -24,6 +26,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 
@@ -31,10 +34,27 @@ import java.util.function.Function;
 public class EthAccountController implements IAccountController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(EthAccountController.class);
-
-    //    @Autowired
-//    Web3j web3j;
     private Web3j web3j = Web3j.build(new HttpService(WalletConstant.NODE_API));
+
+    @Override
+    public BigDecimal getAccountBalance(String walletPassword, String walletPath) {
+
+        Credentials credentials = null;
+        try {
+            credentials = WalletUtils.loadCredentials(walletPassword, walletPath);
+            EthGetBalance balanceWei = web3j.ethGetBalance(credentials.getAddress(),
+                            DefaultBlockParameterName.LATEST)
+                    .sendAsync()
+                    .get();
+            BigDecimal balanceInEther = Convert.fromWei(balanceWei.getBalance().toString(), Convert.Unit.ETHER);
+            LOGGER.info("balance in ether: " + balanceInEther);
+            return balanceInEther;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        System.out.println("Wallet address is : "+credentials.getAddress());
+        return null;
+    }
 
     @Override
     public BigDecimal getAccountBalance(String address) throws ExecutionException, InterruptedException {
@@ -52,6 +72,28 @@ public class EthAccountController implements IAccountController {
     public BigInteger getTransactionNonce(String address) throws IOException {
         EthGetTransactionCount ethGetTransactionCount = web3j.ethGetTransactionCount(address, DefaultBlockParameterName.LATEST).send();
         return ethGetTransactionCount.getTransactionCount();
+    }
+
+    @Override
+    public String sendTransaction(RawTransaction trx) {
+        Credentials credentials = null;
+        // Sign the transaction
+        byte[] signedMessage = TransactionEncoder.signMessage(trx, credentials);
+
+        // Convert it to Hexadecimal String to be sent to the node
+        String hexValue = Numeric.toHexString(signedMessage);
+
+        // Send transaction via JSON-RPC
+        EthSendTransaction ethSendTransaction = null;
+        try {
+            ethSendTransaction = web3j.ethSendRawTransaction(hexValue).send();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        // Get the transaction hash
+        String transactionHash = ethSendTransaction.getTransactionHash();
+        return transactionHash;
     }
 
     public void sendTransaction(String fromAddress, String toAddress, BigDecimal amount, String password, WalletFile walletfile) throws Exception {
@@ -140,4 +182,20 @@ public class EthAccountController implements IAccountController {
         return signData(rawTransaction, walletfile, password);
     }*/
 
+    public Boolean checkTrxMinted(String transactionHash){
+        // Wait for transaction to be mined
+        Optional<TransactionReceipt> transactionReceipt = null;
+        do {
+            try {
+            EthGetTransactionReceipt ethGetTransactionReceiptResp = web3j.ethGetTransactionReceipt(transactionHash).send();
+            transactionReceipt = ethGetTransactionReceiptResp.getTransactionReceipt();
+
+                Thread.sleep(3000); // Retry after 3 sec
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        } while(!transactionReceipt.isPresent());
+
+        return true;
+    }
 }

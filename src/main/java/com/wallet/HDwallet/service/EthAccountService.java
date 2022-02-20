@@ -2,15 +2,14 @@ package com.wallet.HDwallet.service;
 
 import com.wallet.HDwallet.controller.IAccountController;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.*;
+import org.web3j.crypto.RawTransaction;
 
-import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.concurrent.ExecutionException;
 
 @RestController
+@RequestMapping("/accounts")
 public class EthAccountService implements IAccountService{
     @Autowired
     IAccountController accountController;
@@ -22,5 +21,11 @@ public class EthAccountService implements IAccountService{
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    //create and send trx
+    @PostMapping(value="/transaction/send", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public void process2(@RequestBody RawTransaction trx) {
+        accountController.sendTransaction(trx);
     }
 }
