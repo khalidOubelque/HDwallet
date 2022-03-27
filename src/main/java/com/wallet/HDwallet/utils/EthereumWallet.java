@@ -1,8 +1,6 @@
 package com.wallet.HDwallet.utils;
 
 import com.wallet.HDwallet.common.WalletConstant;
-import com.wallet.HDwallet.controller.EthAccountController;
-import lombok.Data;
 import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
